@@ -4,7 +4,7 @@ const LobbyPopup = ({ onStart }) => {
   return (
     <div className={styles.overlay}>
       <div className={styles.popup}>
-        <img className={styles.logoImage} src='/logo.png' alt="logo" />
+        <img className={styles.logoImage} src='/logo.svg' alt="logo" />
         <div className={styles.logo}> 
           <span className={styles.logoAccent}>CRYPTO </span>
           <span className={styles.logoText}>GAME</span>
