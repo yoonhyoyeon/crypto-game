@@ -1,0 +1,137 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  background: #121212;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.gameContent {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  max-width: 1500px;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+}
+
+.controls {
+  margin-top: 2rem;
+  text-align: center;
+  color: #fff;
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.controls p {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.bullButton, .bearButton {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.bullButton {
+  border: 3px solid #00ff88;
+  color: #00ff88;
+}
+
+.bearButton {
+  border: 3px solid #ff4444;
+  color: #ff4444;
+}
+
+.bullButton:hover {
+  background-color: #00ff88;
+  color: #fff;
+  border: 3px solid #00ff88;
+}
+.bearButton:hover {
+  background-color: #ff4444;
+  color: #fff;
+  border: 3px solid #ff4444;
+}
+
+.bullButton.active, .bearButton.active {
+  transform: scale(1.05);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.bullButton:disabled, .bearButton:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.bullButton.active {
+  animation: pulse-green 1s infinite;
+  background-color: #00ff88;
+}
+
+.bearButton.active {
+  animation: pulse-red 1s infinite;
+  background-color: #ff4444;
+}
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+  }
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+  }
+}
+
+.controls p:last-child {
+  color: #00ff88;
+  font-weight: bold;
+} 

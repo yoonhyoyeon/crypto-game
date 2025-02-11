@@ -1,0 +1,78 @@
+.orderBook {
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    width: 250px;
+    color: #fff;
+    font-family: monospace;
+}
+
+.header {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.2fr;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85rem;
+    color: #888;
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    z-index: 2;
+}
+
+.header span {
+    text-align: center;
+}
+
+.orders {
+    height: 600px;
+    overflow: hidden;
+    position: relative;
+}
+
+.row {
+    position: relative;
+    height: 19.35px;
+    cursor: pointer;
+}
+
+.row:hover .rowContent {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.progressBar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+}
+
+.rowContent {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.2fr;
+    padding: 4px 16px;
+    font-size: 0.85rem;
+    height: 100%;
+    z-index: 1;
+}
+
+.rowContent span {
+    text-align: right;
+}
+
+.rowContent .price {
+    text-align: left;
+}
+
+.currentPrice .rowContent {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.amount {
+    color: #fff;
+}
+
+.volume {
+    color: #888;
+} 
