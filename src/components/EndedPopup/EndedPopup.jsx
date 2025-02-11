@@ -1,6 +1,9 @@
 import styles from './EndedPopup.module.css';
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
 
 const EndedPopup = ({ isSuccess, onGoToLobby }) => {
+  const { width, height } = useWindowSize();
   return (
     <div className={styles.overlay}>
       <div className={styles.popup}>

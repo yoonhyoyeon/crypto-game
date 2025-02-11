@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './Game.module.css';
 import OrderBook from '../OrderBook/OrderBook';
 import { GAME_STATE, GAME_SETTINGS } from '../../constants';
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
 
-export default function Game({ gameState, onGameEnd }) {
+export default function Game({ gameState, onGameEnd, isSuccess }) {
     const canvasRef = useRef(null);
     const [candles, setCandles] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isWaiting, setIsWaiting] = useState(false);
     const [lastCandle, setLastCandle] = useState(null);
     const [selectedGuess, setSelectedGuess] = useState(null);
+    const { width, height } = useWindowSize();
+    const [showConfetti, setShowConfetti] = useState(false);
 
     // gameState가 변경될 때마다 게임 데이터 초기화
     useEffect(() => {
@@ -301,11 +305,10 @@ export default function Game({ gameState, onGameEnd }) {
 
     // 예측 처리 로직을 별도 함수로 분리
     const handleGuess = (isBull) => {
-        if (!isWaiting || selectedGuess) return;  // 이미 선택했으면 무시
+        if (!isWaiting || selectedGuess) return;
         
-        setSelectedGuess(isBull ? 'bull' : 'bear');  // 선택 상태 저장
+        setSelectedGuess(isBull ? 'bull' : 'bear');
         
-        // 설정된 승률에 따라 사용자가 이기도록 마지막 캔들 조작
         const shouldWin = Math.random() < GAME_SETTINGS.WIN_RATE;
         const lastOpen = lastCandle.open;
         const volatility = (shouldWin === isBull ? 1 : -1) * 
@@ -319,16 +322,21 @@ export default function Game({ gameState, onGameEnd }) {
             low: Math.min(lastOpen, lastOpen + volatility) - Math.random() * 50,
         };
         
-        // 깜빡이는 캔들 제거
         const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
         Array.from(oldBlinkingCandles).forEach(canvas => canvas.remove());
         
         setCandles(prev => [...prev, manipulatedLastCandle]);
         setCurrentIndex(50);
         
+        // 예측 성공 여부 즉시 확인하고 색종이 표시
+        const actual = manipulatedLastCandle.close > manipulatedLastCandle.open;
+        const success = isBull === actual;
+        if (success) {
+            setShowConfetti(true);
+        }
+        
         setTimeout(() => {
-            const actual = manipulatedLastCandle.close > manipulatedLastCandle.open;
-            onGameEnd(isBull === actual);
+            onGameEnd(success);
         }, GAME_SETTINGS.RESULT_DELAY);
     };
 
@@ -347,10 +355,26 @@ export default function Game({ gameState, onGameEnd }) {
         return () => window.removeEventListener('keypress', handleKeyPress);
     }, [isWaiting, lastCandle, selectedGuess]);
 
+    // gameState가 변경될 때 색종이 초기화
+    useEffect(() => {
+        if (gameState === GAME_STATE.PLAYING) {
+            setShowConfetti(false);
+        }
+    }, [gameState]);
+
     return (
         <div className={styles.container} style={{ 
             visibility: gameState === GAME_STATE.PLAYING ? 'visible' : 'hidden' 
         }}>
+            {showConfetti && (
+                <Confetti
+                    width={width}
+                    height={height}
+                    recycle={false}        // 색종이가 한번만 떨어지도록 설정
+                    numberOfPieces={500}   // 색종이 개수 증가
+                    gravity={0.3}          // 색종이가 천천히 떨어지도록 설정
+                />
+            )}
             <div className={styles.gameContent}>
                 <canvas
                     ref={canvasRef}

@@ -30,6 +30,7 @@ function App() {
         <EndedPopup isSuccess={isSuccess} onGoToLobby={handleGoToLobby} />
       ) : null}
       <Game 
+        isSuccess={isSuccess}
         gameState={gameState} 
         onGameEnd={handleGameEnd} 
       />

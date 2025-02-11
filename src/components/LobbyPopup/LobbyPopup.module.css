@@ -43,6 +43,13 @@
   color: #a0a0a0;
   font-size: 1.1rem;
   margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.highlight {
+  color: #00ff88;
+  font-weight: 700;
+  font-size: 1.2rem;
 }
 
 .startButton {
