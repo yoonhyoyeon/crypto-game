@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './Game.module.css';
 import OrderBook from '../OrderBook/OrderBook';
-import { GAME_STATE } from '../../constants';
+import { GAME_STATE, GAME_SETTINGS } from '../../constants';
 
 export default function Game({ gameState, onGameEnd }) {
     const canvasRef = useRef(null);
@@ -20,6 +20,11 @@ export default function Game({ gameState, onGameEnd }) {
             setIsWaiting(false);
             setLastCandle(null);
             setSelectedGuess(null);
+
+            // 이전 게임의 깜빡이는 캔들 제거
+            const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
+            Array.from(oldBlinkingCandles).forEach(canvas => canvas.remove());
+
             // 새로운 캔들 데이터 생성
             generateCandles();
         }
@@ -29,7 +34,7 @@ export default function Game({ gameState, onGameEnd }) {
     const generateCandles = () => {
         const newCandles = [];
         let prevClose = 10000; // 시작 가격
-        const baseDate = new Date('2024-01-01');
+        const baseDate = new Date('2025-01-01');
 
         // 51개 생성 (50개 표시 + 1개 정답)
         for (let i = 0; i < 51; i++) {
@@ -87,7 +92,68 @@ export default function Game({ gameState, onGameEnd }) {
         candles.slice(0, currentIndex + 1).forEach((candle, i) => {
             const x = i * (candleWidth + spacing) + leftPadding;
             
-            // 캔들 그리기 (캔들 색상은 그대로 시가/종가 비교)
+            // 마지막 캔들이고 대기 상태일 때는 깜빡이는 효과로만 그리기
+            if (i === currentIndex && isWaiting) {
+                // 깜빡이는 캔들을 위한 새로운 캔버스 생성
+                const blinkCanvas = document.createElement('canvas');
+                blinkCanvas.width = width;
+                blinkCanvas.height = height;
+                blinkCanvas.className = styles.blinkingCandle;
+                
+                // 캔버스의 위치를 메인 캔버스와 정확히 일치하도록 설정
+                const mainCanvas = canvasRef.current;
+                const mainCanvasRect = mainCanvas.getBoundingClientRect();
+                
+                blinkCanvas.style.position = 'absolute';
+                blinkCanvas.style.width = mainCanvasRect.width + 'px';
+                blinkCanvas.style.height = mainCanvasRect.height + 'px';
+                blinkCanvas.style.left = '0';
+                blinkCanvas.style.top = '0';
+                
+                const blinkCtx = blinkCanvas.getContext('2d');
+                blinkCtx.scale(
+                    mainCanvasRect.width / width,
+                    mainCanvasRect.height / height
+                );
+                
+                // 마지막 캔들만 다시 그리기
+                const isGreen = candle.close > candle.open;
+                
+                // 심지 그리기
+                blinkCtx.strokeStyle = isGreen ? '#00ff88' : '#ff4444';
+                blinkCtx.lineWidth = 2;
+                blinkCtx.beginPath();
+                blinkCtx.moveTo(x + candleWidth / 2, 
+                    (maxPrice - candle.high) * chartHeight / priceRange + 50);
+                blinkCtx.lineTo(x + candleWidth / 2, 
+                    (maxPrice - candle.low) * chartHeight / priceRange + 50);
+                blinkCtx.stroke();
+                
+                // 몸통 그리기
+                blinkCtx.fillStyle = isGreen ? '#00ff88' : '#ff4444';
+                const candleHeight = Math.abs(candle.close - candle.open) * chartHeight / priceRange;
+                blinkCtx.fillRect(
+                    x,
+                    (maxPrice - Math.max(candle.open, candle.close)) * chartHeight / priceRange + 50,
+                    candleWidth,
+                    Math.max(candleHeight, 1)
+                );
+
+                // 기존 캔버스의 컨테이너에 깜빡이는 캔버스 추가
+                const canvasContainer = mainCanvas.parentElement;
+                canvasContainer.style.position = 'relative';
+                canvasContainer.appendChild(blinkCanvas);
+
+                // 이전 깜빡이는 캔들 제거
+                const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
+                if (oldBlinkingCandles.length > 1) {
+                    oldBlinkingCandles[0].remove();
+                }
+                
+                return; // 메인 캔버스에는 그리지 않음
+            }
+
+            // 나머지 캔들 그리기
             const isGreen = candle.close > candle.open;
             ctx.strokeStyle = isGreen ? '#00ff88' : '#ff4444';
             ctx.fillStyle = isGreen ? '#00ff88' : '#ff4444';
@@ -226,29 +292,54 @@ export default function Game({ gameState, onGameEnd }) {
         if (currentIndex < 49) {
             const timer = setTimeout(() => {
                 setCurrentIndex(prev => prev + 1);
-            }, 100);  // 200ms에서 100ms로 변경하여 애니메이션 속도 2배 증가
+            }, GAME_SETTINGS.ANIMATION_DELAY);
             return () => clearTimeout(timer);
         } else if (!isWaiting) {
             setIsWaiting(true);
         }
     }, [candles, currentIndex]);
 
+    // 예측 처리 로직을 별도 함수로 분리
+    const handleGuess = (isBull) => {
+        if (!isWaiting || selectedGuess) return;  // 이미 선택했으면 무시
+        
+        setSelectedGuess(isBull ? 'bull' : 'bear');  // 선택 상태 저장
+        
+        // 설정된 승률에 따라 사용자가 이기도록 마지막 캔들 조작
+        const shouldWin = Math.random() < GAME_SETTINGS.WIN_RATE;
+        const lastOpen = lastCandle.open;
+        const volatility = (shouldWin === isBull ? 1 : -1) * 
+            (Math.random() * (GAME_SETTINGS.MAX_VOLATILITY - GAME_SETTINGS.MIN_VOLATILITY) + 
+            GAME_SETTINGS.MIN_VOLATILITY);
+        
+        const manipulatedLastCandle = {
+            ...lastCandle,
+            close: lastOpen + volatility,
+            high: Math.max(lastOpen, lastOpen + volatility) + Math.random() * 50,
+            low: Math.min(lastOpen, lastOpen + volatility) - Math.random() * 50,
+        };
+        
+        // 깜빡이는 캔들 제거
+        const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
+        Array.from(oldBlinkingCandles).forEach(canvas => canvas.remove());
+        
+        setCandles(prev => [...prev, manipulatedLastCandle]);
+        setCurrentIndex(50);
+        
+        setTimeout(() => {
+            const actual = manipulatedLastCandle.close > manipulatedLastCandle.open;
+            onGameEnd(isBull === actual);
+        }, GAME_SETTINGS.RESULT_DELAY);
+    };
+
     // 키보드 입력 처리
     useEffect(() => {
         const handleKeyPress = (e) => {
-            if (!isWaiting || selectedGuess) return;  // 이미 선택했으면 무시
+            if (!isWaiting || selectedGuess) return;
 
             if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 's') {
-                const guess = e.key.toLowerCase() === 'a';
-                setSelectedGuess(guess ? 'bull' : 'bear');  // 선택 상태 저장
-                
-                setCandles(prev => [...prev, lastCandle]);
-                setCurrentIndex(50);
-                
-                setTimeout(() => {
-                    const actual = lastCandle.close > lastCandle.open;
-                    onGameEnd(guess === actual);
-                }, 3000);  // 1초에서 3초로 변경
+                const isBull = e.key.toLowerCase() === 'a';
+                handleGuess(isBull);
             }
         };
 
@@ -278,12 +369,14 @@ export default function Game({ gameState, onGameEnd }) {
                         <button 
                             className={`${styles.bullButton} ${selectedGuess === 'bull' ? styles.active : ''}`}
                             disabled={selectedGuess !== null}
+                            onClick={() => handleGuess(true)}
                         >
                             양봉 (A)
                         </button>
                         <button 
                             className={`${styles.bearButton} ${selectedGuess === 'bear' ? styles.active : ''}`}
                             disabled={selectedGuess !== null}
+                            onClick={() => handleGuess(false)}
                         >
                             음봉 (S)
                         </button>

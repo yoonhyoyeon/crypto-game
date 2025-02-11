@@ -17,6 +17,7 @@
   max-width: 1500px;
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .canvas {
@@ -26,6 +27,7 @@
   width: 100%;
   max-width: 1200px;
   height: auto;
+  position: relative;
 }
 
 .controls {
@@ -134,4 +136,24 @@
 .controls p:last-child {
   color: #00ff88;
   font-weight: bold;
+}
+
+.blinkingCandle {
+  position: absolute;
+  pointer-events: none;
+  animation: blink 1s infinite;
+  z-index: 10;
+  border-radius: 12px;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
 } 
