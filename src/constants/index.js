@@ -5,7 +5,7 @@ export const GAME_STATE = {
 };
 
 export const GAME_SETTINGS = {
-    WIN_RATE: 0.5,           // 승률 48%
+    WIN_RATE: 0.5,           // 승률
     MIN_VOLATILITY: 50,       // 최소 변동성
     MAX_VOLATILITY: 150,      // 최대 변동성
     ANIMATION_DELAY: 100,     // 애니메이션 딜레이 (ms)
