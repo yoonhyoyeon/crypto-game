@@ -352,6 +352,7 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         setSelectedGuess(isBull ? 'bull' : 'bear');
         
         const shouldWin = Math.random() < GAME_SETTINGS.WIN_RATE;
+        console.log(shouldWin);
         const lastOpen = lastCandle.open;
         const volatility = (shouldWin === isBull ? 1 : -1) * 
             (Math.random() * (GAME_SETTINGS.MAX_VOLATILITY - GAME_SETTINGS.MIN_VOLATILITY) + 
