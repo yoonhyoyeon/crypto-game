@@ -14,6 +14,9 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
     const [selectedGuess, setSelectedGuess] = useState(null);
     const { width, height } = useWindowSize();
     const [showConfetti, setShowConfetti] = useState(false);
+    const [showSadEmoji, setShowSadEmoji] = useState(false);
+    const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 600 });
+    const containerRef = useRef(null);
 
     // gameState가 변경될 때마다 게임 데이터 초기화
     useEffect(() => {
@@ -67,6 +70,26 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         setLastCandle(newCandles[50]);        // 51번째는 정답용
     };
 
+    // 캔버스 크기 조정 함수
+    const updateCanvasSize = () => {
+        if (containerRef.current) {
+            const container = containerRef.current;
+            const containerWidth = container.clientWidth;
+            // 컨테이너 너비에 맞춰 캔버스 크기 조정 (비율 유지)
+            setCanvasSize({
+                width: containerWidth,
+                height: containerWidth * 0.5
+            });
+        }
+    };
+
+    // 리사이즈 이벤트 처리
+    useEffect(() => {
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+        return () => window.removeEventListener('resize', updateCanvasSize);
+    }, []);
+
     // 캔들차트 그리기
     const drawChart = (ctx, width, height) => {
         if (!candles.length) return;
@@ -76,11 +99,15 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         const chartHeight = height * 0.6;
         const volumeHeight = height * 0.2;
         const chartGap = height * 0.2;
-        const candleWidth = 12;  // 캔들 너비 축소
-        const spacing = 6;       // 간격 축소
         const leftPadding = 50;
         const rightPadding = 100;
         const chartWidth = width - leftPadding - rightPadding;
+
+        // 캔들 개수에 따라 동적으로 캔들 크기와 간격 계산
+        const totalCandles = 50; // 표시할 총 캔들 수
+        const availableWidth = chartWidth;
+        const candleWidth = Math.max(Math.floor(availableWidth / totalCandles * 0.7), 4); // 최소 너비 4px
+        const spacing = Math.max(Math.floor(availableWidth / totalCandles * 0.3), 2); // 최소 간격 2px
         
         // 가격 범위 계산
         const prices = candles.flatMap(candle => [candle.high, candle.low]);
@@ -98,63 +125,17 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
             
             // 마지막 캔들이고 대기 상태일 때는 깜빡이는 효과로만 그리기
             if (i === currentIndex && isWaiting) {
-                // 깜빡이는 캔들을 위한 새로운 캔버스 생성
-                const blinkCanvas = document.createElement('canvas');
-                blinkCanvas.width = width;
-                blinkCanvas.height = height;
-                blinkCanvas.className = styles.blinkingCandle;
-                
-                // 캔버스의 위치를 메인 캔버스와 정확히 일치하도록 설정
-                const mainCanvas = canvasRef.current;
-                const mainCanvasRect = mainCanvas.getBoundingClientRect();
-                
-                blinkCanvas.style.position = 'absolute';
-                blinkCanvas.style.width = mainCanvasRect.width + 'px';
-                blinkCanvas.style.height = mainCanvasRect.height + 'px';
-                blinkCanvas.style.left = '0';
-                blinkCanvas.style.top = '0';
-                
-                const blinkCtx = blinkCanvas.getContext('2d');
-                blinkCtx.scale(
-                    mainCanvasRect.width / width,
-                    mainCanvasRect.height / height
-                );
-                
-                // 마지막 캔들만 다시 그리기
-                const isGreen = candle.close > candle.open;
-                
-                // 심지 그리기
-                blinkCtx.strokeStyle = isGreen ? '#00ff88' : '#ff4444';
-                blinkCtx.lineWidth = 2;
-                blinkCtx.beginPath();
-                blinkCtx.moveTo(x + candleWidth / 2, 
-                    (maxPrice - candle.high) * chartHeight / priceRange + 50);
-                blinkCtx.lineTo(x + candleWidth / 2, 
-                    (maxPrice - candle.low) * chartHeight / priceRange + 50);
-                blinkCtx.stroke();
-                
-                // 몸통 그리기
-                blinkCtx.fillStyle = isGreen ? '#00ff88' : '#ff4444';
-                const candleHeight = Math.abs(candle.close - candle.open) * chartHeight / priceRange;
-                blinkCtx.fillRect(
-                    x,
-                    (maxPrice - Math.max(candle.open, candle.close)) * chartHeight / priceRange + 50,
-                    candleWidth,
-                    Math.max(candleHeight, 1)
-                );
-
-                // 기존 캔버스의 컨테이너에 깜빡이는 캔버스 추가
-                const canvasContainer = mainCanvas.parentElement;
-                canvasContainer.style.position = 'relative';
-                canvasContainer.appendChild(blinkCanvas);
-
-                // 이전 깜빡이는 캔들 제거
-                const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
-                if (oldBlinkingCandles.length > 1) {
-                    oldBlinkingCandles[0].remove();
-                }
-                
-                return; // 메인 캔버스에는 그리지 않음
+                drawBlinkingCandle(candle, i, ctx, { 
+                    width, 
+                    height, 
+                    chartHeight, 
+                    priceRange, 
+                    maxPrice, 
+                    candleWidth, 
+                    spacing, 
+                    leftPadding 
+                });
+                return;
             }
 
             // 나머지 캔들 그리기
@@ -281,6 +262,67 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         ctx.fillText(Math.round(maxVolume).toLocaleString(), width - rightPadding + 20, volumeY);
     };
 
+    // drawChart 함수 내부의 깜빡이는 캔들 부분 수정
+    const drawBlinkingCandle = (candle, i, ctx, chartData) => {
+        const { width, height, chartHeight, priceRange, maxPrice, candleWidth, spacing, leftPadding } = chartData;
+        const x = i * (candleWidth + spacing) + leftPadding;
+
+        // 깜빡이는 캔들을 위한 새로운 캔버스 생성
+        const blinkCanvas = document.createElement('canvas');
+        blinkCanvas.width = width;  // 메인 캔버스와 동일한 크기 사용
+        blinkCanvas.height = height;
+        blinkCanvas.className = styles.blinkingCandle;
+
+        const mainCanvas = canvasRef.current;
+        const mainCanvasRect = mainCanvas.getBoundingClientRect();
+
+        blinkCanvas.style.position = 'absolute';
+        blinkCanvas.style.width = mainCanvasRect.width + 'px';
+        blinkCanvas.style.height = mainCanvasRect.height + 'px';
+        blinkCanvas.style.left = '0';
+        blinkCanvas.style.top = '0';
+
+        const blinkCtx = blinkCanvas.getContext('2d');
+        
+        // 스케일 조정 없이 메인 캔버스와 동일한 크기로 그리기
+        const isGreen = candle.close > candle.open;
+        
+        // 심지 그리기
+        blinkCtx.strokeStyle = isGreen ? '#00ff88' : '#ff4444';
+        blinkCtx.lineWidth = 2;
+        blinkCtx.beginPath();
+        blinkCtx.moveTo(
+            x + candleWidth / 2,
+            (maxPrice - candle.high) * chartHeight / priceRange + 50
+        );
+        blinkCtx.lineTo(
+            x + candleWidth / 2,
+            (maxPrice - candle.low) * chartHeight / priceRange + 50
+        );
+        blinkCtx.stroke();
+
+        // 몸통 그리기
+        blinkCtx.fillStyle = isGreen ? '#00ff88' : '#ff4444';
+        const candleHeight = Math.abs(candle.close - candle.open) * chartHeight / priceRange;
+        blinkCtx.fillRect(
+            x,
+            (maxPrice - Math.max(candle.open, candle.close)) * chartHeight / priceRange + 50,
+            candleWidth,
+            Math.max(candleHeight, 1)
+        );
+
+        // 기존 캔버스의 컨테이너에 깜빡이는 캔버스 추가
+        const canvasContainer = mainCanvas.parentElement;
+        canvasContainer.style.position = 'relative';
+        canvasContainer.appendChild(blinkCanvas);
+
+        // 이전 깜빡이는 캔들 제거
+        const oldBlinkingCandles = document.getElementsByClassName(styles.blinkingCandle);
+        if (oldBlinkingCandles.length > 1) {
+            oldBlinkingCandles[0].remove();
+        }
+    };
+
     // 캔들 애니메이션
     useEffect(() => {
         if (!candles.length) {
@@ -328,11 +370,17 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         setCandles(prev => [...prev, manipulatedLastCandle]);
         setCurrentIndex(50);
         
-        // 예측 성공 여부 즉시 확인하고 색종이 표시
+        // 예측 성공/실패에 따른 효과 표시
         const actual = manipulatedLastCandle.close > manipulatedLastCandle.open;
         const success = isBull === actual;
         if (success) {
             setShowConfetti(true);
+        } else {
+            setShowSadEmoji(true);
+            // 3초 후 우는 이모티콘 숨기기
+            setTimeout(() => {
+                setShowSadEmoji(false);
+            }, 3000);
         }
         
         setTimeout(() => {
@@ -355,10 +403,11 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         return () => window.removeEventListener('keypress', handleKeyPress);
     }, [isWaiting, lastCandle, selectedGuess]);
 
-    // gameState가 변경될 때 색종이 초기화
+    // gameState가 변경될 때 효과 초기화
     useEffect(() => {
         if (gameState === GAME_STATE.PLAYING) {
             setShowConfetti(false);
+            setShowSadEmoji(false);
         }
     }, [gameState]);
 
@@ -370,16 +419,21 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
                 <Confetti
                     width={width}
                     height={height}
-                    recycle={false}        // 색종이가 한번만 떨어지도록 설정
-                    numberOfPieces={500}   // 색종이 개수 증가
-                    gravity={0.3}          // 색종이가 천천히 떨어지도록 설정
+                    recycle={false}
+                    numberOfPieces={500}
+                    gravity={0.3}
                 />
             )}
-            <div className={styles.gameContent}>
+            {showSadEmoji && (
+                <div className={styles.sadEmoji}>
+                    😢
+                </div>
+            )}
+            <div className={styles.gameContent} ref={containerRef}>
                 <canvas
                     ref={canvasRef}
-                    width={1200}
-                    height={600}
+                    width={canvasSize.width}
+                    height={canvasSize.height}
                     className={styles.canvas}
                 />
                 <OrderBook 
