@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './Game.module.css';
 import OrderBook from '../OrderBook/OrderBook';
 import { GAME_STATE, GAME_SETTINGS } from '../../constants';
-import Confetti from 'react-confetti';
+import JSConfetti from 'js-confetti';
 import { useWindowSize } from 'react-use';
 
 export default function Game({ gameState, onGameEnd, isSuccess }) {
@@ -17,6 +17,7 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
     const [showSadEmoji, setShowSadEmoji] = useState(false);
     const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 600 });
     const containerRef = useRef(null);
+    const jsConfettiRef = useRef(null);
 
     // gameState가 변경될 때마다 게임 데이터 초기화
     useEffect(() => {
@@ -345,6 +346,14 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         }
     }, [candles, currentIndex]);
 
+    // JSConfetti 인스턴스 초기화
+    useEffect(() => {
+        jsConfettiRef.current = new JSConfetti();
+        return () => {
+            jsConfettiRef.current = null;
+        };
+    }, []);
+
     // 예측 처리 로직을 별도 함수로 분리
     const handleGuess = (isBull) => {
         if (!isWaiting || selectedGuess) return;
@@ -375,10 +384,31 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         const actual = manipulatedLastCandle.close > manipulatedLastCandle.open;
         const success = isBull === actual;
         if (success) {
-            setShowConfetti(true);
+            // 성공 시 색종이 효과
+            jsConfettiRef.current?.addConfetti({
+                emojis: ['💰', '🚀', '⭐', '✨'],
+                emojiSize: 50,
+                confettiNumber: 100,
+            });
+            jsConfettiRef.current?.addConfetti({
+                confettiColors: [
+                    '#00ff88', '#0099ff', '#ff4444', '#ffeb3b',
+                    '#ff9800', '#9c27b0', '#00bcd4', '#4caf50'
+                ],
+                confettiRadius: 6,
+                confettiNumber: 300,
+            });
         } else {
+            // 실패 시 놀리는 효과 - 이모지 크기와 효과 강화
             setShowSadEmoji(true);
-            // 3초 후 우는 이모티콘 숨기기
+            jsConfettiRef.current?.addConfetti({
+                emojis: ['😝', '🤪', '😜'],
+                emojiSize: 70,          // 40에서 70으로 증가
+                confettiNumber: 50,     // 30에서 50으로 증가
+                confettiRadius: 100,    // 60에서 100으로 증가
+                velocity: 60,           // 40에서 60으로 증가
+                spread: 100,            // 80에서 100으로 증가
+            });
             setTimeout(() => {
                 setShowSadEmoji(false);
             }, 3000);
@@ -416,18 +446,9 @@ export default function Game({ gameState, onGameEnd, isSuccess }) {
         <div className={styles.container} style={{ 
             visibility: gameState === GAME_STATE.PLAYING ? 'visible' : 'hidden' 
         }}>
-            {showConfetti && (
-                <Confetti
-                    width={width}
-                    height={height}
-                    recycle={false}
-                    numberOfPieces={500}
-                    gravity={0.3}
-                />
-            )}
             {showSadEmoji && (
                 <div className={styles.sadEmoji}>
-                    😢
+                    😝
                 </div>
             )}
             <div className={styles.gameContent} ref={containerRef}>
