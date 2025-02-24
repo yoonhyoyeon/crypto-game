@@ -14,7 +14,6 @@ const LobbyPopup = ({ onStart }) => {
         </p>
         <button onClick={onStart} className={styles.startButton}>
           게임 시작
-          <span className={styles.buttonIcon}>→</span>
         </button>
       </div>
     </div>

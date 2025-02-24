@@ -78,7 +78,7 @@
 .logoText {
   color: #00ff88;
   text-shadow: 
-    0 0 20px rgba(0, 255, 136, 0.5);
+    0 0 10px rgba(0, 255, 136, 0.5);
   clip-path: polygon(0 0, 100% 0, 100% 70%, 95% 100%, 5% 100%, 0 70%);
   padding: 0 10px;
 }
@@ -129,7 +129,7 @@
   background: #ffffff;
   color: #000000;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
+  cursor: pointer;
 }
 
 .buttonIcon {
@@ -137,12 +137,8 @@
   transition: transform 0.3s;
 }
 
-.startButton:hover .buttonIcon {
-  transform: translateX(5px);
-}
-
 .logoImage {
   width: 60%;
   margin-bottom: 1rem;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.3));
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
