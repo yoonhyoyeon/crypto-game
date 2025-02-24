@@ -38,99 +38,83 @@
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
+  background: rgba(26, 26, 26, 0.8);
+  padding: 2rem 3rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 
+    0 0 40px rgba(0, 255, 136, 0.2),
+    inset 0 0 20px rgba(0, 255, 136, 0.1);
 }
 
 .controls p {
   margin: 0.5rem 0;
   font-size: 1.2rem;
+  font-family: 'Share Tech Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .buttons {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .bullButton, .bearButton {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 6px;
+  padding: 0.8rem 2rem;
+  border: 2px solid;
+  border-radius: 4px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Share Tech Mono', monospace;
+  background: transparent;
 }
 
 .bullButton {
-  border: 3px solid #00ff88;
   color: #00ff88;
+  border-color: #00ff88;
 }
 
 .bearButton {
-  border: 3px solid #ff4444;
   color: #ff4444;
+  border-color: #ff4444;
 }
 
 .bullButton:hover {
-  background-color: #00ff88;
-  color: #fff;
-  border: 3px solid #00ff88;
+  background: #00ff88;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
 }
+
 .bearButton:hover {
-  background-color: #ff4444;
-  color: #fff;
-  border: 3px solid #ff4444;
-}
-
-.bullButton.active, .bearButton.active {
-  transform: scale(1.05);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-}
-
-.bullButton:disabled, .bearButton:disabled {
-  cursor: default;
-  opacity: 0.8;
+  background: #ff4444;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
 }
 
 .bullButton.active {
-  animation: pulse-green 1s infinite;
-  background-color: #00ff88;
+  background: #00ff88;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
 }
 
 .bearButton.active {
-  animation: pulse-red 1s infinite;
-  background-color: #ff4444;
+  background: #ff4444;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
 }
 
-@keyframes pulse-green {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
-  }
-}
-
-@keyframes pulse-red {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
-  }
+.bullButton:disabled, .bearButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .controls p:last-child {
